@@ -9,14 +9,14 @@ import simpledb.query.*;
  * @author Edward Sciore
  */
 public class RecordComparator implements Comparator<Scan> {
-   private List<AbstractMap.SimpleEntry<String, String>> fields;
+   private List<String> fields;
    
    /**
     * Create a comparator using the specified fields,
     * using the ordering implied by its iterator.
     * @param fields a list of field names
     */
-   public RecordComparator(List<AbstractMap.SimpleEntry<String, String>> fields) {
+   public RecordComparator(List<String> fields) {
       this.fields = fields;
    }
    
@@ -33,15 +33,21 @@ public class RecordComparator implements Comparator<Scan> {
     * @return the result of comparing each scan's current record according to the field list
     */
    public int compare(Scan s1, Scan s2) {
-      for (Map.Entry<String, String> entry : fields) {
-         Constant val1 = s1.getVal(entry.getKey());
-         Constant val2 = s2.getVal(entry.getKey());
-         int result = val1.compareTo(val2);
-         if (entry.getValue().equals("desc"))
+	   // compare more than 1 attribute
+	  int result = 0;
+      for (String field : fields) {
+    	 String[] entry = field.split("-");
+         Constant val1 = s1.getVal(entry[0]);
+         Constant val2 = s2.getVal(entry[0]);
+         result = val1.compareTo(val2);
+         if (entry[1].equals("desc"))
         	 result *= -1;
-         if (result != 0)
-            return result;
+         if (result == 0) {
+        	 continue;
+         } else {
+        	 return result;
+         }
       }
-      return 0;
+      return result;
    }
 }

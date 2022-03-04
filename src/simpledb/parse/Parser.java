@@ -54,8 +54,8 @@ public class Parser {
       return pred;
    }
    
-   private List<AbstractMap.SimpleEntry<String, String>> orderList() {
-	   List<AbstractMap.SimpleEntry<String, String>> L = new ArrayList<AbstractMap.SimpleEntry<String, String>>();
+   private List<String> orderList() {
+	   List<String> L = new ArrayList<String>();
 	   String name = field();
 	   String by;
 	   try {
@@ -63,9 +63,7 @@ public class Parser {
 	   } catch (Exception e) {
 		   by = "asc";
 	   }
-	   AbstractMap.SimpleEntry<String, String> entry 
-	   = new AbstractMap.SimpleEntry<>(name, by);
-	   L.add(entry);
+	   L.add(name+"-"+by);
 	      if (lex.matchDelim(',')) {
 	         lex.eatDelim(',');
 	         L.addAll(orderList());
@@ -86,7 +84,7 @@ public class Parser {
          pred = predicate();
       }
             
-	  List<AbstractMap.SimpleEntry<String, String>> orders = new ArrayList<AbstractMap.SimpleEntry<String, String>>();
+	  List<String> orders = new ArrayList<String>();
       if (lex.matchKeyword("order")) {
     	  lex.eatKeyword("order");
     	  if (lex.matchKeyword("by")) {

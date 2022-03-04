@@ -28,22 +28,13 @@ public class MergeJoinPlan implements Plan {
     */
    public MergeJoinPlan(Transaction tx, Plan p1, Plan p2, String fldname1, String fldname2) {
       this.fldname1 = fldname1;
-      // List<String> sortlist1 = Arrays.asList(fldname1);
-      
-	  List<AbstractMap.SimpleEntry<String, String>> sortlist1 = new ArrayList<AbstractMap.SimpleEntry<String, String>>();
-	  AbstractMap.SimpleEntry<String, String> entry 
-	   = new AbstractMap.SimpleEntry<>(fldname1, fldname1);
-	  sortlist1.add(entry);
-	  
+       List<String> sortlist1 = Arrays.asList(fldname1);
+     	  
       this.p1 = new SortPlan(tx, p1, sortlist1);
       
       this.fldname2 = fldname2;
-//      List<String> sortlist2 = Arrays.asList(fldname2);
-      List<AbstractMap.SimpleEntry<String, String>> sortlist2 = new ArrayList<AbstractMap.SimpleEntry<String, String>>();
-	  AbstractMap.SimpleEntry<String, String> entry2 
-	   = new AbstractMap.SimpleEntry<>(fldname2, fldname2);
-	  sortlist1.add(entry2);
-	  
+      List<String> sortlist2 = Arrays.asList(fldname2);
+   	  
       this.p2 = new SortPlan(tx, p2, sortlist2);
       
       sch.addAll(p1.schema());

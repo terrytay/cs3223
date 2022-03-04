@@ -67,7 +67,7 @@ class TablePlanner {
          return null;
       Plan p = makeIndexJoin(current, currsch);
       if (p == null)
-    	  makeMergeJoin(current, currsch);
+    	  p = makeMergeJoin(current, currsch);
       if (p == null)
          p = makeProductJoin(current, currsch);
       return p;
@@ -90,7 +90,7 @@ class TablePlanner {
 	   if (plan2Field == null || plan1Field == null) return null;
 	   
 	   System.out.println("Using merge join plan...");
-	   return new MergeJoinPlan(tx, current, myplan, plan1Field, plan2Field);
+	   return new MergeJoinPlan(tx, current, myplan, plan1Field+"-"+"asc", plan2Field+"-"+"asc");
    }
    
    /**

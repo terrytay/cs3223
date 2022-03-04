@@ -27,13 +27,13 @@ public class GroupByPlan implements Plan {
     * @param aggfns the aggregation functions
     * @param tx the calling transaction
     */
-   public GroupByPlan(Transaction tx, Plan p, List<AbstractMap.SimpleEntry<String, String>> groupfields, List<AggregationFn> aggfns) {
+   public GroupByPlan(Transaction tx, Plan p, List<String> groupfields, List<AggregationFn> aggfns) {
       System.out.println("GroupByPlan activated...");
 	   this.p = new SortPlan(tx, p, groupfields);
 	   this.groupfields = new ArrayList<String>();
-	   for (Map.Entry<String, String> fldname : groupfields) {
-	         this.groupfields.add(fldname.getKey());
-	         sch.add(fldname.getKey(), p.schema());
+	   for (String fldname : groupfields) {
+	         this.groupfields.add(fldname.split("-")[0]);
+	         sch.add(fldname, p.schema());
 	      }
       this.aggfns = aggfns;
 

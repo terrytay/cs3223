@@ -12,19 +12,19 @@ public class QueryData {
    private List<String> fields;
    private Collection<String> tables;
    private Predicate pred;
-   private List<AbstractMap.SimpleEntry<String, String>> orders;
+   private List<String> orders;
    
    /**
     * Saves the field and table list and predicate.
     */
-   public QueryData(List<String> fields, Collection<String> tables, Predicate pred, List<AbstractMap.SimpleEntry<String, String>> orders) {
+   public QueryData(List<String> fields, Collection<String> tables, Predicate pred, List<String> orders) {
       this.fields = fields;
       this.tables = tables;
       this.pred = pred;
       this.orders = orders;
    }
    
-   public List<AbstractMap.SimpleEntry<String, String>> orders() {
+   public List<String> orders() {
 	   return orders;
    }
    

@@ -22,8 +22,8 @@ public class MergeJoinScan implements Scan {
    public MergeJoinScan(Scan s1, SortScan s2, String fldname1, String fldname2) {
       this.s1 = s1;
       this.s2 = s2;
-      this.fldname1 = fldname1;
-      this.fldname2 = fldname2;
+      this.fldname1 = fldname1.split("-")[0];
+      this.fldname2 = fldname2.split("-")[0];
       beforeFirst();
    }
    
