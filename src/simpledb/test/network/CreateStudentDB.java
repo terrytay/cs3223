@@ -82,7 +82,11 @@ public class CreateStudentDB {
          s = "create index courseid on SECTION(CourseId)";
          planner.executeUpdate(s, tx);
          
+         s = "create index sectid on SECTION(SectId) using hash";
+         planner.executeUpdate(s, tx);
+         
          System.out.println("[SECTION] INDEX created on CourseId");
+         System.out.println("[SECTION] INDEX created on SectId");
 
          s = "insert into SECTION(SectId, CourseId, Prof, YearOffered) values ";
          String[] sectvals = {"(13, 12, 'turing', 2018)",
@@ -104,6 +108,11 @@ public class CreateStudentDB {
          planner.executeUpdate(s, tx);
          
          System.out.println("[ENROLL] INDEX created on StudentId");
+         
+         s = "create index sectionid on ENROLL(SectionId) using hash";
+         planner.executeUpdate(s, tx);
+         
+         System.out.println("[ENROLL] INDEX created on SectionId");
          
 
          s = "insert into ENROLL(EId, StudentId, SectionId, Grade) values ";
