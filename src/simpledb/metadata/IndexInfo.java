@@ -43,6 +43,10 @@ public class IndexInfo {
       this.indexmethod = indexmethod;
    }
    
+   public String getIndexMethod() {
+	   return this.indexmethod;
+   }
+   
    /**
     * Open the index described by this object.
     * @return the Index object associated with this information

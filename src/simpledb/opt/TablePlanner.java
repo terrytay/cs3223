@@ -65,7 +65,9 @@ class TablePlanner {
       Predicate joinpred = mypred.joinSubPred(myschema, currsch);
       if (joinpred == null)
          return null;
-      Plan p = makeIndexJoin(current, currsch);
+      Plan p = makeHashJoin(current, currsch);
+      if (p == null)
+    	  p = makeIndexJoin(current, currsch);
       if (p == null)
     	  p = makeMergeJoin(current, currsch);
       if (p == null)
@@ -73,10 +75,27 @@ class TablePlanner {
       return p;
    }
    
+   private Plan makeHashJoin(Plan current, Schema currsch) {
+	   for (String fldname : indexes.keySet()) {
+	         String outerfield = mypred.equatesWithField(fldname);
+	         if (outerfield != null && currsch.hasField(outerfield)) {
+	            IndexInfo ii = indexes.get(fldname);
+	            if (!ii.getIndexMethod().equals("hash")) {
+	            	return null;
+	            }
+	            Plan p = new IndexJoinPlan(current, myplan, ii, outerfield);
+	            p = addSelectPred(p);
+	            System.out.println("Using hash join plan...");
+	            return addJoinPred(p, currsch);
+	         }
+	      }
+	      return null;
+   }
+   
    /**
     * Constructs a sort-merge join plan
     */
-   public Plan makeMergeJoin(Plan current, Schema currsch) {
+   private Plan makeMergeJoin(Plan current, Schema currsch) {
 	   String plan1Field = null;
 	   String plan2Field = null;
 	   for (String field : currsch.fields()) {
