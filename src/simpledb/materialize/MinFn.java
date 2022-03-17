@@ -1,5 +1,6 @@
 package simpledb.materialize;
 
+
 import simpledb.query.*;
 
 /**
@@ -9,13 +10,15 @@ import simpledb.query.*;
 public class MinFn implements AggregationFn {
    private String fldname;
    private Constant val;
+   private boolean isDistinct;
    
    /**
     * Create a min aggregation function for the specified field.
     * @param fldname the name of the aggregated field
     */
-   public MinFn(String fldname) {
+   public MinFn(String fldname, boolean isDistinct) {
       this.fldname = fldname;
+      this.isDistinct = isDistinct;
    }
    
    /**
@@ -25,6 +28,7 @@ public class MinFn implements AggregationFn {
     */
    public void processFirst(Scan s) {
       val = s.getVal(fldname);
+      
    }
    
    /**
@@ -43,7 +47,10 @@ public class MinFn implements AggregationFn {
     * @see simpledb.materialize.AggregationFn#fieldName()
     */
    public String fieldName() {
-      return "minof" + fldname;
+	  if (this.isDistinct) {
+		  return "min(DISTINCT " + fldname + ")";
+	  }
+      return "min(" + fldname + ")";
    }
    
    /**

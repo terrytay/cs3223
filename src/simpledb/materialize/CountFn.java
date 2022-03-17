@@ -1,5 +1,8 @@
 package simpledb.materialize;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import simpledb.query.*;
 
 /**
@@ -9,13 +12,16 @@ import simpledb.query.*;
 public class CountFn implements AggregationFn {
    private String fldname;
    private int count;
+   private boolean isDistinct;
+   private Set<Integer> vals = new HashSet<Integer>();
    
    /**
     * Create a count aggregation function for the specified field.
     * @param fldname the name of the aggregated field
     */
-   public CountFn(String fldname) {
+   public CountFn(String fldname, boolean isDistinct) {
       this.fldname = fldname;
+      this.isDistinct = isDistinct;
    }
    
    /**
@@ -28,6 +34,7 @@ public class CountFn implements AggregationFn {
     */
    public void processFirst(Scan s) {
       count = 1;
+      if (this.isDistinct) vals.add(s.getInt(fldname));
    }
    
    /**
@@ -37,7 +44,12 @@ public class CountFn implements AggregationFn {
     * @see simpledb.materialize.AggregationFn#processNext(simpledb.query.Scan)
     */
    public void processNext(Scan s) {
-      count++;
+	   int value = s.getInt(fldname);
+	   
+	  if (!this.isDistinct || vals.contains(value)) {
+		  count++;
+	      vals.add(value);
+	  }
    }
    
    /**
@@ -45,7 +57,10 @@ public class CountFn implements AggregationFn {
     * @see simpledb.materialize.AggregationFn#fieldName()
     */
    public String fieldName() {
-      return "countof" + fldname;
+	  if (this.isDistinct) {
+		  return "count(DISTINCT " + fldname + ")";
+	  }
+      return "count(" + fldname + ")";
    }
    
    /**

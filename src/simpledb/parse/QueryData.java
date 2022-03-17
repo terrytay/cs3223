@@ -17,11 +17,12 @@ public class QueryData {
    private List<AggregationFn> aggregates;
    private List<String> aggregatesFields;
    private List<String> groups;
+   private boolean isDistinct;
    
    /**
     * Saves the field and table list and predicate.
     */
-   public QueryData(List<String> fields, Collection<String> tables, Predicate pred, List<String> orders, List<AggregationFn> aggregates, List<String> groups) {
+   public QueryData(List<String> fields, Collection<String> tables, Predicate pred, List<String> orders, List<AggregationFn> aggregates, List<String> groups, boolean isDistinct) {
       this.fields = fields;
       this.tables = tables;
       this.pred = pred;
@@ -35,6 +36,11 @@ public class QueryData {
       }
       
       this.groups = groups;
+      this.isDistinct = isDistinct;
+   }
+   
+   public boolean isDistinct() {
+	   return isDistinct;
    }
    
    public List<String> groups() {

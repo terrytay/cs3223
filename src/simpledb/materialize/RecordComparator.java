@@ -40,7 +40,7 @@ public class RecordComparator implements Comparator<Scan> {
          Constant val1 = s1.getVal(entry[0]);
          Constant val2 = s2.getVal(entry[0]);
          result = val1.compareTo(val2);
-         if (entry[1].equals("desc"))
+         if (entry.length > 1 && entry[1].equals("desc"))
         	 result *= -1;
          if (result == 0) {
         	 continue;

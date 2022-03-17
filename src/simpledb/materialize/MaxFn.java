@@ -9,13 +9,15 @@ import simpledb.query.*;
 public class MaxFn implements AggregationFn {
    private String fldname;
    private Constant val;
-   
+   private boolean isDistinct;
+
    /**
     * Create a max aggregation function for the specified field.
     * @param fldname the name of the aggregated field
     */
-   public MaxFn(String fldname) {
+   public MaxFn(String fldname, boolean isDistinct) {
       this.fldname = fldname;
+      this.isDistinct = isDistinct;
    }
    
    /**
@@ -43,7 +45,10 @@ public class MaxFn implements AggregationFn {
     * @see simpledb.materialize.AggregationFn#fieldName()
     */
    public String fieldName() {
-      return "maxof" + fldname;
+	  if (this.isDistinct) {
+		  return "max(DISTINCT " + fldname + ")";
+	  }
+      return "max(" + fldname + ")";
    }
    
    /**

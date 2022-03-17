@@ -1,5 +1,8 @@
 package simpledb.materialize;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import simpledb.query.*;
 
 /**
@@ -9,13 +12,15 @@ import simpledb.query.*;
 public class SumFn implements AggregationFn {
    private String fldname;
    private int sum;
-   
+   private boolean isDistinct;
+   private Set<Integer> vals = new HashSet<Integer>();
    /**
     * Create a sum aggregation function for the specified field.
     * @param fldname the name of the aggregated field
     */
-   public SumFn(String fldname) {
+   public SumFn(String fldname, boolean isDistinct) {
       this.fldname = fldname;
+      this.isDistinct = isDistinct;
    }
    
    /**
@@ -28,6 +33,7 @@ public class SumFn implements AggregationFn {
     */
    public void processFirst(Scan s) {
       sum = s.getInt(fldname);
+      if (this.isDistinct) vals.add(sum);
    }
    
    /**
@@ -37,7 +43,12 @@ public class SumFn implements AggregationFn {
     * @see simpledb.materialize.AggregationFn#processNext(simpledb.query.Scan)
     */
    public void processNext(Scan s) {
-      sum+=s.getInt(fldname);
+	   int value = s.getInt(fldname);
+	   
+	  if (!this.isDistinct || !vals.contains(value)) {
+		  sum+=value;
+	      vals.add(value);
+	  }
    }
    
    /**
@@ -45,7 +56,10 @@ public class SumFn implements AggregationFn {
     * @see simpledb.materialize.AggregationFn#fieldName()
     */
    public String fieldName() {
-      return "sumof" + fldname;
+	  if (this.isDistinct) {
+		  return "sum(DISTINCT " + fldname + ")";
+	  }
+      return "sum(" + fldname + ")";
    }
    
    /**

@@ -94,9 +94,13 @@ public class Parser {
    public QueryData query() {
       lex.eatKeyword("select");
       
+      boolean distinct = isDistinct();
+	  
       // aggregates and selection
       List<AggregationFn> aggregates = new ArrayList<>();
       List<String> selectedFields = new ArrayList<>();
+      
+
       while (true) {
     	  if (lex.matchAggregate()) {
     		  AggregationFn aggFn = newAggregationFn();
@@ -148,14 +152,24 @@ public class Parser {
     	  }
       }
       
-      return new QueryData(selectedFields, tables, pred, orders, aggregates, groups);
+      return new QueryData(selectedFields, tables, pred, orders, aggregates, groups, distinct);
+   }
+   
+   private boolean isDistinct() {
+	  if (lex.matchKeyword("distinct")) {
+		  lex.eatKeyword("distinct");
+		  return true;
+	  }
+	  return false;
    }
    
    private AggregationFn newAggregationFn() {
 	   String aggregate = lex.eatAggregate();
 	   List<String> fields = new ArrayList<String>();
+	   boolean distinct = false;
 	   try {
 		   lex.eatDelim('(');
+		   distinct = isDistinct();
 		   fields = selectList();
 		   lex.eatDelim(')');
 	   } catch (Exception e) {
@@ -167,15 +181,15 @@ public class Parser {
 	   // TODO: add in more aggregation fns
 	   switch (aggregate) {
 	   case "count":
-		   return new CountFn(fields.get(0));
+		   return new CountFn(fields.get(0), distinct);
 	   case "max":
-		   return new MaxFn(fields.get(0));
+		   return new MaxFn(fields.get(0), distinct);
 	   case "avg":
-		   return new AvgFn(fields.get(0));
+		   return new AvgFn(fields.get(0), distinct);
 	   case "min":
-		   return new MinFn(fields.get(0));
+		   return new MinFn(fields.get(0), distinct);
 	   case "sum":
-		   return new SumFn(fields.get(0));
+		   return new SumFn(fields.get(0), distinct);
 	   default:
 		   throw new Error("system error in aggregation fn");
 	   }

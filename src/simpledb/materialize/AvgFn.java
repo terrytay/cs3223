@@ -1,5 +1,8 @@
 package simpledb.materialize;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import simpledb.query.*;
 
 /**
@@ -10,13 +13,16 @@ public class AvgFn implements AggregationFn {
    private String fldname;
    private int count;
    private int total;
+   private boolean isDistinct;
+   private Set<Integer> vals = new HashSet<Integer>();
    
    /**
     * Create a avg aggregation function for the specified field.
     * @param fldname the name of the aggregated field
     */
-   public AvgFn(String fldname) {
+   public AvgFn(String fldname, boolean isDistinct) {
       this.fldname = fldname;
+      this.isDistinct = isDistinct;
    }
    
    /**
@@ -30,6 +36,8 @@ public class AvgFn implements AggregationFn {
    public void processFirst(Scan s) {
       count = 1;
       total = s.getInt(fldname);
+      
+      if (this.isDistinct) vals.add(total);
    }
    
    /**
@@ -39,8 +47,13 @@ public class AvgFn implements AggregationFn {
     * @see simpledb.materialize.AggregationFn#processNext(simpledb.query.Scan)
     */
    public void processNext(Scan s) {
-      count++;
-      total += s.getInt(fldname);
+	  int value = s.getInt(fldname);
+	   
+	  if (!this.isDistinct || !vals.contains(value)) {
+	      count++;
+	      total += value;  
+	      vals.add(value);
+	  }
    }
    
    /**
@@ -48,7 +61,10 @@ public class AvgFn implements AggregationFn {
     * @see simpledb.materialize.AggregationFn#fieldName()
     */
    public String fieldName() {
-      return "avg" + fldname;
+	  if (this.isDistinct) {
+		  return "avg(DISTINCT " + fldname + ")";
+	  }
+      return "avg(" + fldname + ")";
    }
    
    /**
