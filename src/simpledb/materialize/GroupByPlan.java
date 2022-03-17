@@ -31,10 +31,12 @@ public class GroupByPlan implements Plan {
       System.out.println("GroupByPlan activated...");
 	   this.p = new SortPlan(tx, p, groupfields);
 	   this.groupfields = new ArrayList<String>();
-	   for (String fldname : groupfields) {
-	         this.groupfields.add(fldname.split("-")[0]);
-	         sch.add(fldname, p.schema());
-	      }
+	   if (groupfields != null) {
+		   for (String fldname : groupfields) {
+		         this.groupfields.add(fldname.split("-")[0]);
+		         sch.add(fldname.split("-")[0], p.schema());
+		      }
+	   }
       this.aggfns = aggfns;
 
       for (AggregationFn fn : aggfns)

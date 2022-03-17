@@ -2,6 +2,7 @@ package simpledb.parse;
 
 import java.util.*;
 
+import simpledb.materialize.*;
 import simpledb.query.*;
 import simpledb.record.*;
 
@@ -71,11 +72,52 @@ public class Parser {
 	      return L;
 	   }
    
+   private List<String> groupList() {
+	   List<String> L = new ArrayList<String>();
+	   String name = field();
+	   String by;
+	   try {
+		   by = field();
+	   } catch (Exception e) {
+		   by = "asc";
+	   }
+	   L.add(name+"-"+by);
+	      if (lex.matchDelim(',')) {
+	         lex.eatDelim(',');
+	         L.addAll(groupList());
+	      }
+	      return L;
+	   }
+   
 // Methods for parsing queries
    
    public QueryData query() {
       lex.eatKeyword("select");
-      List<String> fields = selectList();
+      
+      // aggregates and selection
+      List<AggregationFn> aggregates = new ArrayList<>();
+      List<String> selectedFields = new ArrayList<>();
+      while (true) {
+    	  if (lex.matchAggregate()) {
+    		  AggregationFn aggFn = newAggregationFn();
+    		  selectedFields.add(aggFn.fieldName());
+    		  aggregates.add(aggFn);
+    	  } else if (lex.matchDelim('*')) {
+			  lex.eatDelim('*');
+			  selectedFields.add("*");
+    	  } else if (lex.matchId()){
+    		  selectedFields.add(field());
+    	  } else {
+    		  throw new Error("select statements error");
+    	  }
+    	  
+    	  if (!lex.matchDelim(',')) {
+    		  break;
+    	  }
+    	  lex.eatDelim(',');
+      }
+      
+      // relations
       lex.eatKeyword("from");
       Collection<String> tables = tableList();
       Predicate pred = new Predicate();
@@ -84,6 +126,7 @@ public class Parser {
          pred = predicate();
       }
             
+      // order by
 	  List<String> orders = new ArrayList<String>();
       if (lex.matchKeyword("order")) {
     	  lex.eatKeyword("order");
@@ -93,15 +136,62 @@ public class Parser {
     		  
     	  }
       }
-      return new QueryData(fields, tables, pred, orders);
+      
+      // group by
+	  List<String> groups = new ArrayList<String>();
+      if (lex.matchKeyword("group")) {
+    	  lex.eatKeyword("group");
+    	  if (lex.matchKeyword("by")) {
+    		  lex.eatKeyword("by");
+    		  groups = groupList();
+    		  
+    	  }
+      }
+      
+      return new QueryData(selectedFields, tables, pred, orders, aggregates, groups);
+   }
+   
+   private AggregationFn newAggregationFn() {
+	   String aggregate = lex.eatAggregate();
+	   List<String> fields = new ArrayList<String>();
+	   try {
+		   lex.eatDelim('(');
+		   fields = selectList();
+		   lex.eatDelim(')');
+	   } catch (Exception e) {
+		   throw new Error("aggregation fn error. template should be e.g. sum(eid)", e);
+	   }
+	   
+	   if (fields.size() != 1) throw new Error("aggregation fn error. system accepts only one arg in aggregation fn");
+	   
+	   // TODO: add in more aggregation fns
+	   switch (aggregate) {
+	   case "count":
+		   return new CountFn(fields.get(0));
+	   case "max":
+		   return new MaxFn(fields.get(0));
+	   case "avg":
+		   return new AvgFn(fields.get(0));
+	   case "min":
+		   return new MinFn(fields.get(0));
+	   case "sum":
+		   return new SumFn(fields.get(0));
+	   default:
+		   throw new Error("system error in aggregation fn");
+	   }
    }
    
    private List<String> selectList() {
       List<String> L = new ArrayList<String>();
-      L.add(field());
-      if (lex.matchDelim(',')) {
-         lex.eatDelim(',');
-         L.addAll(selectList());
+      if (lex.matchDelim('*')) {
+    	  lex.eatDelim('*');
+    	  L.add("*");
+      } else {
+	      L.add(field());
+	      if (lex.matchDelim(',')) {
+	         lex.eatDelim(',');
+	         L.addAll(selectList());
+	      }
       }
       return L;
    }

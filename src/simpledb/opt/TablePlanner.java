@@ -6,7 +6,9 @@ import simpledb.record.*;
 import simpledb.query.*;
 import simpledb.metadata.*;
 import simpledb.index.planner.*;
+import simpledb.materialize.HashJoinPlan;
 import simpledb.materialize.MergeJoinPlan;
+import simpledb.materialize.NestedJoinPlan;
 import simpledb.multibuffer.MultibufferProductPlan;
 import simpledb.plan.*;
 
@@ -20,7 +22,7 @@ class TablePlanner {
    private Schema myschema;
    private Map<String,IndexInfo> indexes;
    private Transaction tx;
-   
+
    /**
     * Creates a new table planner.
     * The specified predicate applies to the entire query.
@@ -38,7 +40,7 @@ class TablePlanner {
       myschema = myplan.schema();
       indexes  = mdm.getIndexInfo(tblname, tx);
    }
-   
+
    /**
     * Constructs a select plan for the table.
     * The plan will use an indexselect, if possible.
@@ -50,7 +52,7 @@ class TablePlanner {
          p = myplan;
       return addSelectPred(p);
    }
-   
+
    /**
     * Constructs a join plan of the specified plan
     * and the table.  The plan will use an indexjoin, if possible.
@@ -65,33 +67,47 @@ class TablePlanner {
       Predicate joinpred = mypred.joinSubPred(myschema, currsch);
       if (joinpred == null)
          return null;
+
       Plan p = makeHashJoin(current, currsch);
       if (p == null)
-    	  p = makeIndexJoin(current, currsch);
+          p = makeIndexJoin(current, currsch);
       if (p == null)
     	  p = makeMergeJoin(current, currsch);
       if (p == null)
-         p = makeProductJoin(current, currsch);
+          p = makeNestedJoin(current, currsch);
+      if (p == null)
+          p = makeProductJoin(current, currsch);
+
+      System.out.println("Join cost: " + p.blocksAccessed());
       return p;
    }
-   
+
+   private Plan makeNestedJoin(Plan current, Schema currsch) {
+	   for (String fldname: myschema.fields()) {
+            String outerfield = mypred.equatesWithField(fldname);
+            if (outerfield != null && currsch.hasField(outerfield)) {
+                System.out.println("Using nested join plan...");
+                Plan p = new NestedJoinPlan(current, myplan, outerfield, fldname);
+                p = addSelectPred(p);
+                return addJoinPred(p, currsch);
+            }
+        }
+        return null;
+    }
+
    private Plan makeHashJoin(Plan current, Schema currsch) {
-	   for (String fldname : indexes.keySet()) {
-	         String outerfield = mypred.equatesWithField(fldname);
-	         if (outerfield != null && currsch.hasField(outerfield)) {
-	            IndexInfo ii = indexes.get(fldname);
-	            if (!ii.getIndexMethod().equals("hash")) {
-	            	return null;
-	            }
-	            Plan p = new IndexJoinPlan(current, myplan, ii, outerfield);
-	            p = addSelectPred(p);
-	            System.out.println("Using hash join plan...");
-	            return addJoinPred(p, currsch);
-	         }
-	      }
-	      return null;
+	   for (String fldname: myschema.fields()) {
+           String outerfield = mypred.equatesWithField(fldname);
+           if (outerfield != null && currsch.hasField(outerfield)) {
+        	   Plan p = new HashJoinPlan(current, myplan, outerfield, fldname, tx);
+        	   p = addSelectPred(p);
+			    System.out.println("Using hash join plan...");
+			    return addJoinPred(p, currsch);
+           }
+	   }
+	   return null;
    }
-   
+
    /**
     * Constructs a sort-merge join plan
     */
@@ -101,17 +117,17 @@ class TablePlanner {
 	   for (String field : currsch.fields()) {
 		   Predicate queryPreds = mypred;
 		   plan2Field = queryPreds.equatesWithField(plan1Field = field);
-		   
+
 		   if (plan2Field != null)
 			   break;
 	   }
-	   
+
 	   if (plan2Field == null || plan1Field == null) return null;
-	   
+
 	   System.out.println("Using merge join plan...");
 	   return new MergeJoinPlan(tx, current, myplan, plan1Field+"-"+"asc", plan2Field+"-"+"asc");
    }
-   
+
    /**
     * Constructs a product plan of the specified plan and
     * this table.
@@ -122,7 +138,7 @@ class TablePlanner {
       Plan p = addSelectPred(myplan);
       return new MultibufferProductPlan(tx, current, p);
    }
-   
+
    private Plan makeIndexSelect() {
       for (String fldname : indexes.keySet()) {
          Constant val = mypred.equatesWithConstant(fldname);
@@ -134,7 +150,7 @@ class TablePlanner {
       }
       return null;
    }
-   
+
    private Plan makeIndexJoin(Plan current, Schema currsch) {
       for (String fldname : indexes.keySet()) {
          String outerfield = mypred.equatesWithField(fldname);
@@ -148,12 +164,13 @@ class TablePlanner {
       }
       return null;
    }
-   
+
    private Plan makeProductJoin(Plan current, Schema currsch) {
+       System.out.println("Using product join...");
       Plan p = makeProductPlan(current);
       return addJoinPred(p, currsch);
    }
-   
+
    private Plan addSelectPred(Plan p) {
       Predicate selectpred = mypred.selectSubPred(myschema);
       if (selectpred != null)
@@ -161,7 +178,7 @@ class TablePlanner {
       else
          return p;
    }
-   
+
    private Plan addJoinPred(Plan p, Schema currsch) {
       Predicate joinpred = mypred.joinSubPred(currsch, myschema);
       if (joinpred != null)

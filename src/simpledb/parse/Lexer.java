@@ -9,6 +9,7 @@ import java.io.*;
  */
 public class Lexer {
    private Collection<String> keywords;
+   private Collection<String> aggregates;
    private StreamTokenizer tok;
    
    /**
@@ -17,6 +18,7 @@ public class Lexer {
     */
    public Lexer(String s) {
       initKeywords();
+      initAggregates();
       tok = new StreamTokenizer(new StringReader(s));
       tok.ordinaryChar('.');   //disallow "." in identifiers
       tok.wordChars('_', '_'); //allow "_" in identifiers
@@ -61,6 +63,10 @@ public class Lexer {
       return tok.ttype == StreamTokenizer.TT_WORD && tok.sval.equals(w);
    }
    
+   public boolean matchAggregate() {
+	   return tok.ttype == StreamTokenizer.TT_WORD && aggregates.contains(tok.sval);
+   }
+    
    /**
     * Returns true if the current token is a legal identifier.
     * @return true if the current token is an identifier
@@ -97,6 +103,15 @@ public class Lexer {
       }
       
       return cmp;
+   }
+   
+   public String eatAggregate() {
+	   if (!matchAggregate()) {
+		   throw new BadSyntaxException();
+	   }
+	   String aggregate = tok.sval;
+	   nextToken();
+	   return aggregate;
    }
    
    /**
@@ -181,4 +196,8 @@ public class Lexer {
                                "create", "table", "int", "varchar", "view", "as", "index", "on",
                                "order", "by");
    }
+   
+   private void initAggregates() {
+	      aggregates = Arrays.asList("count", "avg", "sum", "min", "max");
+	   }
 }
