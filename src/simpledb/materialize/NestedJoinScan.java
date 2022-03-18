@@ -64,16 +64,16 @@ public class NestedJoinScan implements Scan {
     * @see simpledb.query.Scan#next()
     */
    public boolean next() {
-	   while (true) {
-	       boolean outerHasMore = outer.next();
-	       if (!outerHasMore) return false;
-	
-	        while (inner.next()) {
+	   boolean outerHasMore = outer.next();
+	   while (outerHasMore) {
+	        if (inner.next()) {
 	            if (outer.getVal(fldname1).equals(inner.getVal(fldname2)))
 	                return true;
+	        } else {
+	        	inner.beforeFirst();
 	        }
-	        inner.beforeFirst();
 	   }
+	   return false;
    }
 
    /**

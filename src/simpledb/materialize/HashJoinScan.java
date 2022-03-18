@@ -93,7 +93,7 @@ public class HashJoinScan implements Scan {
 	   // If do, then extract the partition content to specificLHSPartition
 	   // Set inRecord to true so the above 'if statement' will run later.
 	   // Return true
-	   if (rhs.next()) {
+	   while (rhs.next()) {
 		   this.inRecord = false;
 		   this.currentRecord = 0;
 		   
