@@ -67,18 +67,17 @@ class TablePlanner {
       Predicate joinpred = mypred.joinSubPred(myschema, currsch);
       if (joinpred == null)
          return null;
-
-      Plan p = makeHashJoin(current, currsch);
-      if (p == null)
-          p = makeIndexJoin(current, currsch);
+      
+      Plan p = makeIndexJoin(current, currsch);
       if (p == null)
     	  p = makeMergeJoin(current, currsch);
       if (p == null)
-          p = makeNestedJoin(current, currsch);
+    	  p = makeHashJoin(current, currsch);
       if (p == null)
-          p = makeProductJoin(current, currsch);
-
-      System.out.println("Join cost: " + p.blocksAccessed());
+    	  p = makeNestedJoin(current, currsch);
+      if (p == null)
+    	  p = makeProductJoin(current, currsch);
+      
       return p;
    }
 
@@ -86,7 +85,6 @@ class TablePlanner {
 	   for (String fldname: myschema.fields()) {
             String outerfield = mypred.equatesWithField(fldname);
             if (outerfield != null && currsch.hasField(outerfield)) {
-                System.out.println("Using nested join plan...");
                 Plan p = new NestedJoinPlan(current, myplan, outerfield, fldname);
                 p = addSelectPred(p);
                 return addJoinPred(p, currsch);
@@ -101,7 +99,6 @@ class TablePlanner {
            if (outerfield != null && currsch.hasField(outerfield)) {
         	   Plan p = new HashJoinPlan(current, myplan, outerfield, fldname, tx);
         	   p = addSelectPred(p);
-			    System.out.println("Using hash join plan...");
 			    return addJoinPred(p, currsch);
            }
 	   }
@@ -112,20 +109,16 @@ class TablePlanner {
     * Constructs a sort-merge join plan
     */
    private Plan makeMergeJoin(Plan current, Schema currsch) {
-	   String plan1Field = null;
-	   String plan2Field = null;
-	   for (String field : currsch.fields()) {
-		   Predicate queryPreds = mypred;
-		   plan2Field = queryPreds.equatesWithField(plan1Field = field);
-
-		   if (plan2Field != null)
-			   break;
+	   for (String fldname: myschema.fields()) {
+           String outerfield = mypred.equatesWithField(fldname);
+           if (outerfield != null && currsch.hasField(outerfield)) {
+        	   Plan p = new MergeJoinPlan(tx, current, myplan, outerfield+"-"+"asc", fldname+"-"+"asc");
+        	   p = addSelectPred(p);
+		    return addJoinPred(p, currsch);
+           }
 	   }
+	   return null;
 
-	   if (plan2Field == null || plan1Field == null) return null;
-
-	   System.out.println("Using merge join plan...");
-	   return new MergeJoinPlan(tx, current, myplan, plan1Field+"-"+"asc", plan2Field+"-"+"asc");
    }
 
    /**
@@ -158,7 +151,6 @@ class TablePlanner {
             IndexInfo ii = indexes.get(fldname);
             Plan p = new IndexJoinPlan(current, myplan, ii, outerfield);
             p = addSelectPred(p);
-            System.out.println("Using index join plan...");
             return addJoinPred(p, currsch);
          }
       }
@@ -166,7 +158,6 @@ class TablePlanner {
    }
 
    private Plan makeProductJoin(Plan current, Schema currsch) {
-       System.out.println("Using product join...");
       Plan p = makeProductPlan(current);
       return addJoinPred(p, currsch);
    }

@@ -42,6 +42,7 @@ public class MultibufferProductPlan implements Plan {
     * @see simpledb.plan.Plan#open()
     */
    public Scan open() {
+	   System.out.println("Product join plan activated.");
       Scan leftscan = lhs.open();
       TempTable tt = copyRecordsFrom(rhs);
       return new MultibufferProductScan(tx, leftscan, tt.tableName(), tt.getLayout());

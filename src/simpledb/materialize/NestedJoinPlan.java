@@ -20,6 +20,7 @@ public class NestedJoinPlan implements Plan {
     }
 
     public Scan open() {
+ 	   System.out.println("Nested join plan activated.");
         Scan tableScan1 = p1.open();
         TableScan tableScan2 = (TableScan) p2.open();
         return new NestedJoinScan(tableScan1, tableScan2, jfield1, jfield2);

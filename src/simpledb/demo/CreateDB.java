@@ -19,11 +19,11 @@ public class CreateDB {
 	         System.out.println("Table MODULES created.");
 	         
 	         
-//	         s = "create index mcode on MODULES(MCode) using btree";
-//	         planner.executeUpdate(s, tx);
-//	         
-//	         System.out.println("[MODULES] INDEX created on MCode");
-//	         
+	         s = "create index mfacultyid on MODULES(MFacultyID) using btree";
+	         planner.executeUpdate(s, tx);
+	         
+	         System.out.println("[MODULES] INDEX created on MFacultyID");
+	         
 
 
 	         s = "insert into MODULES(MCode, MName, MCap, MFacultyID, MC) values ";
@@ -83,6 +83,10 @@ public class CreateDB {
 	            planner.executeUpdate(s + vals[i], tx);
 	         
 	         System.out.println("MODULES records inserted.");
+	         
+	         tx.commit();
+	         tx = db.newTx();
+	         planner = db.planner();
 
 
 	         s = "create table STUDENTS( SID int, SName varchar(50), MajorID int, GradYr int)";
@@ -90,9 +94,9 @@ public class CreateDB {
 	         
 	         System.out.println("Table STUDENTS created.");
 	         
-//	         s = "create index majid on STUDENTS(MajID) using btree";
-//	         planner.executeUpdate(s, tx);
-//	         
+	         s = "create index majorid on STUDENTS(MajorID) using btree";
+	         planner.executeUpdate(s, tx);
+	         
 //	         System.out.println("[STUDENTS] INDEX created on MajID");
 	         
 //	         s = "create index sid on STUDENTS(SID) using hash";
@@ -152,18 +156,24 @@ public class CreateDB {
 	               "(48, 'selena', 20, 2021)",
 	               "(49, 'luoyi', 10, 2021)",
 	               "(50, 'franco', 10, 2021)"};
-	         for (int i=0; i<studvals.length; i++)
+	         for (int i=0; i<studvals.length; i++) {
 	            planner.executeUpdate(s + studvals[i], tx);
+	         }
 	         
 	         System.out.println("STUDENTS records inserted."); 
+	         
+	         tx.commit();
+	         tx = db.newTx();
+	         planner = db.planner();
+	         
 	         
 	         s = "create table MAJORS(MajID int, MajName varchar(50), FacultyID int)";
 	         planner.executeUpdate(s, tx);
 	         
 	         System.out.println("Table MAJORS created.");
 //	         
-//	         s = "create index majid on MAJORS(MajID) using btree";
-//	         planner.executeUpdate(s, tx);
+	         s = "create index facultyid on MAJORS(FacultyID) using btree";
+	         planner.executeUpdate(s, tx);
 //	         
 //	         System.out.println("[MAJORS] INDEX created on MajID");
 	      
@@ -252,6 +262,10 @@ public class CreateDB {
 		            planner.executeUpdate(s + majvals[i], tx);
 	         
 	         System.out.println("MAJORS records inserted."); 
+	         
+	         tx.commit();
+	         tx = db.newTx();
+	         planner = db.planner();
 	         
 	         s = "create table FACULTY(FID int, FName varchar(50))";
 	         planner.executeUpdate(s, tx);

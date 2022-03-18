@@ -23,6 +23,7 @@ public class HashJoinPlan implements Plan {
     }
 
     public Scan open() {
+ 	   System.out.println("Hash join plan activated.");
         Scan scan1 = p1.open();
         TableScan tableScan2 = (TableScan) p2.open();
         return new HashJoinScan(scan1, tableScan2, jfield1, jfield2, partitionSize, p1.schema().fields());

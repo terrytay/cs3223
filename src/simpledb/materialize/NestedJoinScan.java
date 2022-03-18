@@ -47,6 +47,7 @@ public class NestedJoinScan implements Scan {
     */
    public void beforeFirst() {
       outer.beforeFirst();
+      outer.next();
       inner.beforeFirst();
    }
 
@@ -64,16 +65,30 @@ public class NestedJoinScan implements Scan {
     * @see simpledb.query.Scan#next()
     */
    public boolean next() {
-	   boolean outerHasMore = outer.next();
-	   while (outerHasMore) {
-	        if (inner.next()) {
-	            if (outer.getVal(fldname1).equals(inner.getVal(fldname2)))
-	                return true;
-	        } else {
-	        	inner.beforeFirst();
-	        }
+	   boolean innerHasNext = inner.next();
+	   while (innerHasNext) {
+		   if (outer.getVal(fldname1).equals(inner.getVal(fldname2))) {
+			   return true;
+		   }
+		   innerHasNext = inner.next();
+		   if (!innerHasNext)
+			   if (outer.next()) {
+				   inner.beforeFirst();
+				   innerHasNext = inner.next();
+			   }
 	   }
 	   return false;
+//	   while (inner.next()) {
+//        if (outer.getVal(fldname1).equals(inner.getVal(fldname2)))
+//            return true;
+//	   }
+//	   inner.beforeFirst();
+//	   
+//	   if (!outer.next()) {
+//		   return false;
+//	   }
+//		inner.beforeFirst();
+//		outer.next();
    }
 
    /**
